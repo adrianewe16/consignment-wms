@@ -60,10 +60,10 @@ export default function SearchableSelect({
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between gap-2 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white hover:border-gray-300 outline-none focus:border-indigo-400 text-left"
       >
-        <span className={selected ? 'text-gray-900' : 'text-gray-400'}>
+        <span className={selected ? 'text-gray-900 truncate' : 'text-gray-400'}>
           {selected ? (
-            <span className="flex items-center gap-2">
-              <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{selected.value}</span>
+            <span className="flex items-center gap-2 min-w-0">
+              <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 flex-shrink-0">{selected.value}</span>
               <span className="truncate">{selected.sublabel || selected.label}</span>
             </span>
           ) : placeholder}
@@ -72,7 +72,7 @@ export default function SearchableSelect({
       </button>
 
       {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden">
+        <div className="absolute z-50 top-full mt-1 left-0 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden" style={{ minWidth: '480px' }}>
           {/* Search input */}
           <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100">
             <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -89,8 +89,7 @@ export default function SearchableSelect({
           </div>
 
           {/* Options */}
-          <div className="max-h-60 overflow-y-auto">
-            {/* Clear option */}
+          <div className="max-h-64 overflow-y-auto">
             {value && (
               <button
                 onClick={() => { onChange(''); setOpen(false); setSearch('') }}
@@ -110,10 +109,10 @@ export default function SearchableSelect({
                 <button
                   key={o.value}
                   onClick={() => { onChange(o.value); setOpen(false); setSearch('') }}
-                  className={`w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors ${value === o.value ? 'bg-indigo-50' : ''}`}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors ${value === o.value ? 'bg-indigo-50' : ''}`}
                 >
-                  <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 flex-shrink-0">{o.value}</span>
-                  <span className="text-sm text-gray-800 truncate">{o.sublabel || o.label}</span>
+                  <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 flex-shrink-0 w-44 truncate">{o.value}</span>
+                  <span className="text-sm text-gray-800">{o.sublabel || o.label}</span>
                 </button>
               ))
             )}
