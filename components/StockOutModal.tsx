@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import type { Product } from '@/lib/supabase'
 import { X } from 'lucide-react'
 import { format } from 'date-fns'
+import SearchableSelect from './SearchableSelect'
 
 interface Props {
   dealerId: string
@@ -25,6 +26,12 @@ export default function StockOutModal({ dealerId, onClose, onSaved }: Props) {
   useEffect(() => {
     supabase.from('products').select('*').order('name').then(({ data }) => setProducts(data || []))
   }, [])
+
+  const productOptions = products.map(p => ({
+    value: p.sku,
+    label: p.sku,
+    sublabel: p.name
+  }))
 
   const handleSave = async () => {
     if (!sku) return setError('Select a product')
@@ -59,11 +66,14 @@ export default function StockOutModal({ dealerId, onClose, onSaved }: Props) {
         <div className="space-y-3">
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Product</label>
-            <select value={sku} onChange={e => setSku(e.target.value)}
-              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-red-400">
-              <option value="">— Select SKU —</option>
-              {products.map(p => <option key={p.sku} value={p.sku}>{p.sku} · {p.name}</option>)}
-            </select>
+            <div className="mt-1">
+              <SearchableSelect
+                options={productOptions}
+                value={sku}
+                onChange={setSku}
+                placeholder="Search SKU or product name…"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

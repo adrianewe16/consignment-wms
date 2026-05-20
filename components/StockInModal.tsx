@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import type { Product } from '@/lib/supabase'
 import { X, Plus, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
+import SearchableSelect from './SearchableSelect'
 
 interface StockLine {
   sku: string
@@ -30,6 +31,12 @@ export default function StockInModal({ dealerId, onClose, onSaved }: Props) {
     supabase.from('products').select('*').order('name').then(({ data }) => setProducts(data || []))
   }, [])
 
+  const productOptions = products.map(p => ({
+    value: p.sku,
+    label: p.sku,
+    sublabel: p.name
+  }))
+
   const addLine = () => setLines(l => [...l, { sku: '', unit_type: 'stock', qty: 1 }])
   const removeLine = (i: number) => setLines(l => l.filter((_, idx) => idx !== i))
   const updateLine = (i: number, field: keyof StockLine, value: any) => {
@@ -53,10 +60,12 @@ export default function StockInModal({ dealerId, onClose, onSaved }: Props) {
     }))
 
     const { error: err } = await supabase.from('movements').insert(movements)
-    
-    // Ensure dealer_products entry exists
+
     for (const l of validLines) {
-      await supabase.from('dealer_products').upsert({ dealer_id: dealerId, sku: l.sku, threshold: 0 }, { onConflict: 'dealer_id,sku', ignoreDuplicates: true })
+      await supabase.from('dealer_products').upsert(
+        { dealer_id: dealerId, sku: l.sku, threshold: 0 },
+        { onConflict: 'dealer_id,sku', ignoreDuplicates: true }
+      )
     }
 
     setLoading(false)
@@ -89,21 +98,22 @@ export default function StockInModal({ dealerId, onClose, onSaved }: Props) {
           </div>
         </div>
 
-        <div className="space-y-2 mb-4">
+        <div className="space-y-3 mb-4">
           <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wide px-1">
-            <span className="col-span-5">Product / SKU</span>
+            <span className="col-span-6">Product / SKU</span>
             <span className="col-span-3">Unit Type</span>
-            <span className="col-span-3">Qty</span>
+            <span className="col-span-2">Qty</span>
             <span className="col-span-1"></span>
           </div>
           {lines.map((line, i) => (
             <div key={i} className="grid grid-cols-12 gap-2 items-center">
-              <div className="col-span-5">
-                <select value={line.sku} onChange={e => updateLine(i, 'sku', e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm outline-none focus:border-green-400">
-                  <option value="">— Select SKU —</option>
-                  {products.map(p => <option key={p.sku} value={p.sku}>{p.sku} · {p.name}</option>)}
-                </select>
+              <div className="col-span-6">
+                <SearchableSelect
+                  options={productOptions}
+                  value={line.sku}
+                  onChange={val => updateLine(i, 'sku', val)}
+                  placeholder="Search SKU or name…"
+                />
               </div>
               <div className="col-span-3">
                 <select value={line.unit_type} onChange={e => updateLine(i, 'unit_type', e.target.value as 'stock' | 'show')}
@@ -112,7 +122,7 @@ export default function StockInModal({ dealerId, onClose, onSaved }: Props) {
                   <option value="show">Show</option>
                 </select>
               </div>
-              <div className="col-span-3">
+              <div className="col-span-2">
                 <input type="number" min="1" value={line.qty} onChange={e => updateLine(i, 'qty', parseInt(e.target.value) || 1)}
                   className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm outline-none focus:border-green-400" />
               </div>

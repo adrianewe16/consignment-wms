@@ -4,9 +4,10 @@ import { supabase } from '@/lib/supabase'
 import type { Dealer, MovementWithProduct } from '@/lib/supabase'
 import { DATE_PRESETS, getPresetDates } from '@/lib/utils'
 import { generateMovementPDF } from '@/lib/pdf'
-import { FileText, Trash2, ChevronDown } from 'lucide-react'
+import { FileText, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import PasswordModal from './PasswordModal'
+import SearchableSelect from './SearchableSelect'
 
 interface Props {
   dealer: Dealer
@@ -60,6 +61,12 @@ export default function TimelineTab({ dealer }: Props) {
     fetchMovements()
   }
 
+  const productOptions = products.map(p => ({
+    value: p.sku,
+    label: p.sku,
+    sublabel: p.name
+  }))
+
   const totalIn = movements.filter(m => m.type === 'in').reduce((s, m) => s + m.qty, 0)
   const totalOut = movements.filter(m => m.type === 'out').reduce((s, m) => s + m.qty, 0)
 
@@ -74,49 +81,55 @@ export default function TimelineTab({ dealer }: Props) {
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        {/* Date presets */}
-        <div className="flex flex-wrap gap-1">
+      <div className="space-y-2 mb-4">
+        {/* Row 1: date presets + date pickers */}
+        <div className="flex flex-wrap items-center gap-2">
           {DATE_PRESETS.map(p => (
             <button key={p.label} onClick={() => applyPreset(p.days)}
               className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 font-medium">
               {p.label}
             </button>
           ))}
-        </div>
-
-        <div className="flex items-center gap-1">
-          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-            className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-indigo-400" />
-          <span className="text-gray-400 text-xs">—</span>
-          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-            className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-indigo-400" />
-        </div>
-
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)}
-          className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-indigo-400">
-          <option value="all">All types</option>
-          <option value="in">IN only</option>
-          <option value="out">OUT only</option>
-        </select>
-
-        <select value={productFilter} onChange={e => setProductFilter(e.target.value)}
-          className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-indigo-400">
-          <option value="">All products</option>
-          {products.map(p => <option key={p.sku} value={p.sku}>{p.sku} · {p.name}</option>)}
-        </select>
-
-        <div className="ml-auto flex items-center gap-4">
-          <div className="text-xs">
-            <span className="text-green-600 font-bold">↑ {totalIn} in</span>
-            <span className="mx-2 text-gray-300">|</span>
-            <span className="text-red-600 font-bold">↓ {totalOut} out</span>
+          <div className="flex items-center gap-1">
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-indigo-400" />
+            <span className="text-gray-400 text-xs">—</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-indigo-400" />
           </div>
-          <button
-            onClick={() => generateMovementPDF(dealer, movements, dateFrom, dateTo)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800">
-            <FileText className="w-3.5 h-3.5" /> Export PDF
-          </button>
+        </div>
+
+        {/* Row 2: type filter + product search + actions */}
+        <div className="flex items-center gap-2">
+          <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)}
+            className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-indigo-400">
+            <option value="all">All types</option>
+            <option value="in">IN only</option>
+            <option value="out">OUT only</option>
+          </select>
+
+          <div className="w-72">
+            <SearchableSelect
+              options={productOptions}
+              value={productFilter}
+              onChange={setProductFilter}
+              placeholder="Filter by SKU or product…"
+              emptyMessage="No SKU found — try a different keyword"
+            />
+          </div>
+
+          <div className="ml-auto flex items-center gap-4">
+            <div className="text-xs">
+              <span className="text-green-600 font-bold">↑ {totalIn} in</span>
+              <span className="mx-2 text-gray-300">|</span>
+              <span className="text-red-600 font-bold">↓ {totalOut} out</span>
+            </div>
+            <button
+              onClick={() => generateMovementPDF(dealer, movements, dateFrom, dateTo)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs rounded-lg hover:bg-gray-800">
+              <FileText className="w-3.5 h-3.5" /> Export PDF
+            </button>
+          </div>
         </div>
       </div>
 
